@@ -140,13 +140,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const logout = () => {
     // Clear all auth data
     localStorage.removeItem('token');
-    
     // Clear welcome message flags to show them again on next login
     sessionStorage.removeItem('welcomeShown');
     sessionStorage.removeItem('adminWelcomeShown');
-    
     setUser(null);
     toast.success('Logged out successfully');
+    // Dispatch a custom logout event for AdminProtected
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('logout'));
+    }
     router.push('/');
   };
 

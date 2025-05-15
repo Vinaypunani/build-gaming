@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Search, Cpu, Check, Star, ArrowUpDown } from 'lucide-react';
 import { ComponentType, SelectedComponent } from '@/types/pc-builder';
-import { getComponentsData } from '@/lib/pc-builder-data';
 
 interface ComponentSelectorProps {
   type: ComponentType;
@@ -12,13 +11,53 @@ interface ComponentSelectorProps {
   currentSelection: SelectedComponent | null;
 }
 
+const COMPONENT_TYPE_TO_CATEGORY: Record<ComponentType, string> = {
+  cpu: 'CPU',
+  motherboard: 'Motherboard',
+  memory: 'RAM',
+  storage: 'Storage',
+  gpu: 'GPU',
+  case: 'Case',
+  powerSupply: 'Power Supply',
+  cooling: 'Cooling',
+};
+
 const ComponentSelector = ({ type, onSelect, currentSelection }: ComponentSelectorProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'price' | 'name' | 'popularity'>('popularity');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [components, setComponents] = useState<SelectedComponent[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  // Get components data for this type
-  const components = getComponentsData(type);
+  useEffect(() => {
+    const fetchComponents = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch('/api/products');
+        const data = await res.json();
+        // Filter products by category name
+        const filtered = data.filter((product: any) => product.category?.name === COMPONENT_TYPE_TO_CATEGORY[type]);
+        // Map to SelectedComponent shape
+        setComponents(filtered.map((product: any) => ({
+          id: product.id,
+          name: product.name,
+          brand: product.brand || product.category?.name || '',
+          image: product.image,
+          price: product.price,
+          discount: product.discount || 0,
+          rating: product.rating || 4.5,
+          reviews: product.reviews || 0,
+          stock: product.stock,
+          specs: product.specs || {},
+        })));
+      } catch (e) {
+        setComponents([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchComponents();
+  }, [type]);
   
   // Filter components based on search
   const filteredComponents = components.filter(component => 
@@ -101,23 +140,29 @@ const ComponentSelector = ({ type, onSelect, currentSelection }: ComponentSelect
       </div>
       
       {/* Components list */}
-      <div className="overflow-y-auto max-h-[450px] pr-2 -mr-2 space-y-2">
-        {sortedComponents.length > 0 ? (
-          sortedComponents.map((component) => (
-            <ComponentCard
-              key={component.id}
-              component={component}
-              onSelect={onSelect}
-              isSelected={currentSelection?.id === component.id}
-            />
-          ))
-        ) : (
-          <div className="text-center py-6 text-gray-400">
-            <Cpu size={32} className="mx-auto mb-2 opacity-50" />
-            <p className="text-sm">No {type}s found matching your search.</p>
-          </div>
-        )}
-      </div>
+      {loading ? (
+        <div className="flex justify-center items-center py-10">
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      ) : (
+        <div className="overflow-y-auto max-h-[450px] pr-2 -mr-2 space-y-2">
+          {sortedComponents.length > 0 ? (
+            sortedComponents.map((component) => (
+              <ComponentCard
+                key={component.id}
+                component={component}
+                onSelect={onSelect}
+                isSelected={currentSelection?.id === component.id}
+              />
+            ))
+          ) : (
+            <div className="text-center py-6 text-gray-400">
+              <Cpu size={32} className="mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No {type}s found matching your search.</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
@@ -180,12 +225,12 @@ const ComponentCard = ({ component, onSelect, isSelected }: ComponentCardProps) 
             <div>
               {component.discount ? (
                 <div className="flex items-center gap-2">
-                  <span className="font-bold">${component.price.toFixed(2)}</span>
-                  <span className="text-gray-400 text-xs line-through">${(component.price + component.discount).toFixed(2)}</span>
-                  <span className="text-green-500 text-xs">Save ${component.discount.toFixed(2)}</span>
+                  <span className="font-bold">₹{component.price.toLocaleString('en-IN')}</span>
+                  <span className="text-gray-400 text-xs line-through">₹{(component.price + component.discount).toLocaleString('en-IN')}</span>
+                  <span className="text-green-500 text-xs">Save ₹{component.discount.toLocaleString('en-IN')}</span>
                 </div>
               ) : (
-                <span className="font-bold">${component.price.toFixed(2)}</span>
+                <span className="font-bold">₹{component.price.toLocaleString('en-IN')}</span>
               )}
             </div>
             

@@ -4,60 +4,56 @@ import React, { useState } from 'react';
 import { PlusCircle, Edit, Trash2, Check, X, Search, Loader2 } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import Button from '@/components/ui/Button';
+import { useCategories } from '@/hooks/useCategories';
 
 interface Category {
-  id: number;
+  id: string;
   name: string;
 }
 
-const initialCategories: Category[] = [
-  { id: 1, name: 'Gaming PCs' },
-  { id: 2, name: 'Components' },
-  { id: 3, name: 'Accessories' },
-];
-
 const CategoriesPage = () => {
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const { categories, loading, addCategory, updateCategory, deleteCategory } = useCategories();
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [formValue, setFormValue] = useState('');
   const [editing, setEditing] = useState<Category | null>(null);
   const [showDelete, setShowDelete] = useState<Category | null>(null);
-  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const filtered = categories.filter(cat => cat.name.toLowerCase().includes(search.toLowerCase()));
 
-  const handleAdd = () => {
-    setEditing(null);
-    setFormValue('');
-    setShowForm(true);
+  const handleAdd = async (name: string) => {
+    await addCategory(name);
   };
-  const handleEdit = (cat: Category) => {
-    setEditing(cat);
-    setFormValue(cat.name);
-    setShowForm(true);
+  const handleEdit = async (id: string, name: string) => {
+    await updateCategory(id, name);
   };
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formValue.trim()) {
-      if (editing) {
-        setCategories(cats => cats.map(c => c.id === editing.id ? { ...c, name: formValue.trim() } : c));
-      } else {
-        setCategories(cats => [...cats, { id: Date.now(), name: formValue.trim() }]);
+      setIsSubmitting(true);
+      try {
+        if (editing) {
+          await handleEdit(editing.id, formValue.trim());
+        } else {
+          await handleAdd(formValue.trim());
+        }
+        setShowForm(false);
+        setEditing(null);
+        setFormValue('');
+      } finally {
+        setIsSubmitting(false);
       }
-      setShowForm(false);
-      setEditing(null);
-      setFormValue('');
     }
   };
-  const handleDelete = () => {
-    if (showDelete) {
-      setDeletingId(showDelete.id);
-      setTimeout(() => { // Simulate async
-        setCategories(cats => cats.filter(c => c.id !== showDelete.id));
-        setShowDelete(null);
-        setDeletingId(null);
-      }, 800);
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteCategory(id);
+      setShowDelete(null);
+      setDeletingId(null);
+    } catch (error) {
+      console.error('Error deleting category:', error);
     }
   };
 
@@ -66,7 +62,11 @@ const CategoriesPage = () => {
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h1 className="text-2xl font-bold">Category Management</h1>
-          <Button onClick={handleAdd}>
+          <Button onClick={() => {
+            setEditing(null);
+            setFormValue('');
+            setShowForm(true);
+          }}>
             <PlusCircle size={18} className="mr-2" />
             Add Category
           </Button>
@@ -90,40 +90,51 @@ const CategoriesPage = () => {
           </div>
           {/* Table */}
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-border">
-              <thead className="bg-background">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filtered.length > 0 ? filtered.map(cat => (
-                  <tr key={cat.id} className="hover:bg-background/50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10 bg-primary/20 text-primary rounded-full flex items-center justify-center">
-                          <span className="text-lg font-semibold">{cat.name[0].toUpperCase()}</span>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium">{cat.name}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end space-x-2">
-                        <button onClick={() => handleEdit(cat)} className="p-1 rounded-md text-gray-400 hover:text-primary hover:bg-background"><Edit size={18} /></button>
-                        <button onClick={() => setShowDelete(cat)} className="p-1 rounded-md text-gray-400 hover:text-red-500 hover:bg-background"><Trash2 size={18} /></button>
-                      </div>
-                    </td>
-                  </tr>
-                )) : (
+            {loading ? (
+              <div className="flex justify-center items-center py-10">
+                <Loader2 size={24} className="animate-spin text-primary" />
+                <span className="ml-2 text-gray-400">Loading categories...</span>
+              </div>
+            ) : (
+              <table className="min-w-full divide-y divide-border">
+                <thead className="bg-background">
                   <tr>
-                    <td colSpan={2} className="px-6 py-10 text-center text-gray-400">No categories found matching your search.</td>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Category</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filtered.length > 0 ? filtered.map(cat => (
+                    <tr key={cat.id} className="hover:bg-background/50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-10 w-10 bg-primary/20 text-primary rounded-full flex items-center justify-center">
+                            <span className="text-lg font-semibold">{cat.name[0].toUpperCase()}</span>
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium">{cat.name}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex justify-end space-x-2">
+                          <button onClick={() => {
+                            setEditing(cat);
+                            setFormValue(cat.name);
+                            setShowForm(true);
+                          }} className="p-1 rounded-md text-gray-400 hover:text-primary hover:bg-background"><Edit size={18} /></button>
+                          <button onClick={() => setShowDelete(cat)} className="p-1 rounded-md text-gray-400 hover:text-red-500 hover:bg-background"><Trash2 size={18} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={2} className="px-6 py-10 text-center text-gray-400">No categories found matching your search.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       </div>
@@ -154,8 +165,18 @@ const CategoriesPage = () => {
                     >Cancel</button>
                     <button
                       type="submit"
-                      className="w-full inline-flex justify-center px-4 py-2 bg-primary text-white border border-transparent rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-                    >{editing ? 'Save Changes' : 'Add Category'}</button>
+                      className="w-full inline-flex justify-center items-center px-4 py-2 bg-primary text-white border border-transparent rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 size={18} className="animate-spin mr-2" />
+                          {editing ? 'Saving...' : 'Adding...'}
+                        </>
+                      ) : (
+                        editing ? 'Save Changes' : 'Add Category'
+                      )}
+                    </button>
                   </div>
                 </form>
               </div>
@@ -181,7 +202,10 @@ const CategoriesPage = () => {
                   >Cancel</button>
                   <button
                     type="button"
-                    onClick={handleDelete}
+                    onClick={() => {
+                      setDeletingId(showDelete.id);
+                      handleDelete(showDelete.id);
+                    }}
                     className="w-full inline-flex justify-center px-4 py-2 bg-red-500 text-white border border-transparent rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                     disabled={deletingId === showDelete.id}
                   >

@@ -11,22 +11,20 @@ interface ProductCardProps {
   id: string;
   name: string;
   price: number;
-  oldPrice?: number;
   image: string;
-  category: string;
-  rating: number;
-  inStock: boolean;
+  category: { id: string; name: string };
+  description?: string;
+  stock: number;
 }
 
 const ProductCard = ({
   id,
   name,
   price,
-  oldPrice,
   image,
   category,
-  rating,
-  inStock
+  description,
+  stock
 }: ProductCardProps) => {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -62,7 +60,7 @@ const ProductCard = ({
         
         {/* Category Badge */}
         <div className="absolute top-2 left-2 bg-secondary/90 text-white text-xs py-1 px-2 rounded">
-          {category}
+          {category?.name}
         </div>
         
         {/* Wishlist Button */}
@@ -84,25 +82,18 @@ const ProductCard = ({
           </h3>
         </Link>
         
-        {/* Rating */}
-        <div className="flex items-center mb-2">
-          <div className="flex">
-            {[...Array(5)].map((_, i) => (
-              <span key={i} className={`text-xs ${i < rating ? 'text-yellow-500' : 'text-gray-500'}`}>★</span>
-            ))}
-          </div>
-          <span className="text-xs text-gray-400 ml-1">({rating.toFixed(1)})</span>
-        </div>
+        {/* Description */}
+        {description && (
+          <div className="text-xs text-gray-400 mb-2 line-clamp-2">{description}</div>
+        )}
         
         {/* Price */}
         <div className="flex items-center mb-3">
           <span className="text-lg font-bold text-foreground">{formatPrice(price)}</span>
-          {oldPrice && (
-            <span className="text-sm text-gray-400 line-through ml-2">
-              {formatPrice(oldPrice)}
-            </span>
-          )}
         </div>
+        
+        {/* Stock */}
+        <div className="mb-3 text-xs text-gray-400">Stock: {stock}</div>
         
         <CartButton
           item={{
@@ -111,7 +102,7 @@ const ProductCard = ({
             price,
             image
           }}
-          variant={inStock ? 'primary' : 'outline'}
+          variant={stock > 0 ? 'primary' : 'outline'}
           size="sm"
           className="w-full"
         />

@@ -63,17 +63,9 @@ const ProfilePage = () => {
                   <User size={18} className="mr-3" />
                   Profile Information
                 </a>
-                <a href="#security" className="flex items-center p-3 rounded-md hover:bg-background/50 transition-colors">
-                  <Lock size={18} className="mr-3" />
-                  Security
-                </a>
-                <a href="#orders" className="flex items-center p-3 rounded-md hover:bg-background/50 transition-colors">
+                <a href="/orders" className="flex items-center p-3 rounded-md hover:bg-background/50 transition-colors">
                   <History size={18} className="mr-3" />
-                  Order History
-                </a>
-                <a href="#payment" className="flex items-center p-3 rounded-md hover:bg-background/50 transition-colors">
-                  <CreditCard size={18} className="mr-3" />
-                  Payment Methods
+                  Your Orders
                 </a>
               </nav>
             </div>
@@ -132,59 +124,6 @@ const ProfilePage = () => {
                     </p>
                   </div>
                 </div>
-              </div>
-            </section>
-            
-            {/* Security Section */}
-            <section id="security" className="bg-card border border-border rounded-lg p-6 mb-8">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold">Security</h2>
-                <Button size="sm" variant="outline" className="flex items-center gap-2">
-                  <Lock size={16} />
-                  Change Password
-                </Button>
-              </div>
-              
-              <div className="bg-background/50 p-4 rounded-md border border-border mb-6">
-                <p className="text-sm text-gray-400">For security reasons, we recommend changing your password regularly and enabling two-factor authentication.</p>
-              </div>
-              
-              {/* Last Login */}
-              <div className="flex items-center justify-between p-4 bg-background/30 rounded-md">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary mr-3">
-                    <CalendarClock size={20} />
-                  </div>
-                  <div>
-                    <p className="font-medium">Last Login</p>
-                    <p className="text-sm text-gray-400">Today, 15:32 PM</p>
-                  </div>
-                </div>
-                <div>
-                  <span className="text-xs bg-green-500/20 text-green-500 px-2 py-1 rounded-full">
-                    Active
-                  </span>
-                </div>
-              </div>
-            </section>
-            
-            {/* Order History Placeholder */}
-            <section id="orders" className="bg-card border border-border rounded-lg p-6 mb-8">
-              <h2 className="text-xl font-bold mb-6">Order History</h2>
-              <div className="text-center py-8 text-gray-400">
-                <History size={48} className="mx-auto mb-4 opacity-50" />
-                <p>You haven't placed any orders yet.</p>
-                <Button href="/products" className="mt-4">Browse Products</Button>
-              </div>
-            </section>
-            
-            {/* Payment Methods Placeholder */}
-            <section id="payment" className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-xl font-bold mb-6">Payment Methods</h2>
-              <div className="text-center py-8 text-gray-400">
-                <CreditCard size={48} className="mx-auto mb-4 opacity-50" />
-                <p>You haven't added any payment methods yet.</p>
-                <Button className="mt-4">Add Payment Method</Button>
               </div>
             </section>
           </div>

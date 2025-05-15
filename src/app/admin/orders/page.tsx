@@ -4,68 +4,35 @@ import React, { useState } from 'react';
 import { Search, Eye, Edit2, X, Loader2 } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import Button from '@/components/ui/Button';
+import { useOrders } from '@/hooks/useOrders';
+import toast from 'react-hot-toast';
 
 interface Order {
-  id: number;
-  customer: string;
-  date: string;
+  id: string;
+  user: { name: string };
+  createdAt: string;
   total: number;
-  status: 'Pending' | 'Processing' | 'Completed' | 'Cancelled';
-  items: { name: string; qty: number; price: number }[];
+  status: string;
+  items: { product: { name: string }, quantity: number, price: number }[];
 }
 
-const initialOrders: Order[] = [
-  {
-    id: 1001,
-    customer: 'Vinay Punani',
-    date: '2025-05-14',
-    total: 89999,
-    status: 'Completed',
-    items: [
-      { name: 'Gaming Beast', qty: 1, price: 89999 },
-    ],
-  },
-  {
-    id: 1002,
-    customer: 'Amit Shah',
-    date: '2025-05-13',
-    total: 159999,
-    status: 'Processing',
-    items: [
-      { name: 'RTX 4090 GPU', qty: 1, price: 159999 },
-    ],
-  },
-  {
-    id: 1003,
-    customer: 'Priya Patel',
-    date: '2025-05-12',
-    total: 2999,
-    status: 'Pending',
-    items: [
-      { name: 'RGB Keyboard', qty: 1, price: 2999 },
-    ],
-  },
-];
-
 const OrdersPage = () => {
-  const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const { orders: rawOrders, loading, updateOrderStatus } = useOrders();
+  const orders: Order[] = rawOrders as Order[];
   const [search, setSearch] = useState('');
   const [viewOrder, setViewOrder] = useState<Order | null>(null);
-  const [updatingId, setUpdatingId] = useState<number | null>(null);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editStatus, setEditStatus] = useState<Order['status']>('Pending');
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editStatus, setEditStatus] = useState<string>('Pending');
 
-  const filtered = orders.filter(o =>
-    o.customer.toLowerCase().includes(search.toLowerCase()) ||
-    o.id.toString().includes(search)
+  const filtered: Order[] = orders.filter((o: Order) =>
+    (o.user?.name?.toLowerCase().includes(search.toLowerCase()) || o.id.toString().includes(search))
   );
 
-  const handleStatusChange = (orderId: number, newStatus: Order['status']) => {
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
     setUpdatingId(orderId);
-    setTimeout(() => {
-      setOrders(orders => orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-      setUpdatingId(null);
-    }, 800);
+    await updateOrderStatus(orderId, newStatus);
+    setUpdatingId(null);
   };
 
   const handleEditClick = (order: Order) => {
@@ -73,13 +40,16 @@ const OrdersPage = () => {
     setEditStatus(order.status);
   };
 
-  const handleSaveStatus = (orderId: number) => {
+  const handleSaveStatus = async (orderId: string) => {
     setUpdatingId(orderId);
-    setTimeout(() => {
-      setOrders(orders => orders.map(o => o.id === orderId ? { ...o, status: editStatus } : o));
-      setUpdatingId(null);
-      setEditingId(null);
-    }, 800);
+    try {
+      await updateOrderStatus(orderId, editStatus);
+      toast.success('Order status updated!');
+    } catch (err) {
+      toast.error('Failed to update order status.');
+    }
+    setEditingId(null);
+    setUpdatingId(null);
   };
 
   const handleCloseEdit = () => {
@@ -107,7 +77,13 @@ const OrdersPage = () => {
               />
             </div>
           </div>
-          {/* Table */}
+          {/* Loader */}
+          {loading ? (
+            <div className="flex justify-center items-center py-10">
+              <Loader2 size={24} className="animate-spin text-primary" />
+              <span className="ml-2 text-gray-400">Loading orders...</span>
+            </div>
+          ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-border">
               <thead className="bg-background">
@@ -124,8 +100,8 @@ const OrdersPage = () => {
                 {filtered.length > 0 ? filtered.map(order => (
                   <tr key={order.id} className="hover:bg-background/50">
                     <td className="px-6 py-4 whitespace-nowrap">#{order.id}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{order.customer}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">{order.date}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{order.user?.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">{new Date(order.createdAt).toLocaleString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">₹{order.total.toLocaleString()}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex items-center gap-2">
@@ -136,14 +112,14 @@ const OrdersPage = () => {
                             <>
                               <select
                                 value={editStatus}
-                                onChange={e => setEditStatus(e.target.value as Order['status'])}
+                                onChange={e => setEditStatus(e.target.value)}
                                 className="px-2 py-1 text-xs rounded-md bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
                                 disabled={updatingId !== null}
                               >
-                                <option value="Pending">Pending</option>
-                                <option value="Processing">Processing</option>
-                                <option value="Completed">Completed</option>
-                                <option value="Cancelled">Cancelled</option>
+                                <option value="PENDING">Pending</option>
+                                <option value="PROCESSING">Processing</option>
+                                <option value="COMPLETED">Completed</option>
+                                <option value="CANCELLED">Cancelled</option>
                               </select>
                               <button onClick={() => handleSaveStatus(order.id)} className="ml-2 px-2 py-1 text-xs rounded bg-primary text-white hover:bg-primary/90 disabled:opacity-70" disabled={updatingId !== null}>Save</button>
                               <button onClick={handleCloseEdit} className="ml-2 px-2 py-1 text-xs rounded bg-background text-gray-400 border border-border hover:bg-card">Close</button>
@@ -151,12 +127,12 @@ const OrdersPage = () => {
                           )
                         ) : (
                           <span className={`px-2 py-1 text-xs rounded-full select-none ${
-                            order.status === 'Completed' ? 'bg-green-500/20 text-green-500' :
-                            order.status === 'Processing' ? 'bg-blue-500/20 text-blue-500' :
-                            order.status === 'Pending' ? 'bg-yellow-500/20 text-yellow-500' :
+                            order.status === 'COMPLETED' ? 'bg-green-500/20 text-green-500' :
+                            order.status === 'PROCESSING' ? 'bg-blue-500/20 text-blue-500' :
+                            order.status === 'PENDING' ? 'bg-yellow-500/20 text-yellow-500' :
                             'bg-red-500/20 text-red-500'
                           }`}>
-                            {order.status}
+                            {order.status.charAt(0) + order.status.slice(1).toLowerCase()}
                           </span>
                         )}
                       </div>
@@ -178,6 +154,7 @@ const OrdersPage = () => {
               </tbody>
             </table>
           </div>
+          )}
         </div>
       </div>
       {/* View Order Modal */}
@@ -188,8 +165,8 @@ const OrdersPage = () => {
             <div className="inline-block align-bottom bg-card rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
               <div className="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                 <h3 className="text-lg font-medium mb-4">Order #{viewOrder.id}</h3>
-                <div className="mb-2 text-sm text-gray-400">Customer: <span className="text-foreground font-medium">{viewOrder.customer}</span></div>
-                <div className="mb-2 text-sm text-gray-400">Date: <span className="text-foreground font-medium">{viewOrder.date}</span></div>
+                <div className="mb-2 text-sm text-gray-400">Customer: <span className="text-foreground font-medium">{viewOrder.user?.name}</span></div>
+                <div className="mb-2 text-sm text-gray-400">Date: <span className="text-foreground font-medium">{new Date(viewOrder.createdAt).toLocaleString()}</span></div>
                 <div className="mb-2 text-sm text-gray-400">Status: <span className="text-foreground font-medium">{viewOrder.status}</span></div>
                 <div className="mb-2 text-sm text-gray-400">Total: <span className="text-foreground font-medium">₹{viewOrder.total.toLocaleString()}</span></div>
                 <div className="mb-4">
@@ -197,7 +174,7 @@ const OrdersPage = () => {
                   <ul className="list-disc pl-5">
                     {viewOrder.items.map((item, idx) => (
                       <li key={idx} className="text-sm text-foreground">
-                        {item.name} x{item.qty} <span className="text-gray-400">(₹{item.price.toLocaleString()})</span>
+                        {item.product?.name} x{item.quantity} <span className="text-gray-400">(₹{item.price.toLocaleString()})</span>
                       </li>
                     ))}
                   </ul>

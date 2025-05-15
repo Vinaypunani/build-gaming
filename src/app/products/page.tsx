@@ -3,26 +3,11 @@
 import React, { useState, useMemo } from 'react';
 import ProductCard from '@/components/product/ProductCard';
 import Button from '@/components/ui/Button';
-import { componentsData } from '@/lib/pc-builder-data';
 import Layout from '@/components/layout/Layout';
+import { useProducts } from '@/hooks/useProducts';
+import { useCategories } from '@/hooks/useCategories';
 
 const PAGE_SIZE = 8;
-
-// Flatten all components into a single product list
-const allProducts = Object.entries(componentsData).flatMap(([category, items]) =>
-  (items as any[]).map(item => ({
-    ...item,
-    category,
-    inStock: item.stock > 0,
-    rating: item.rating || 4.5,
-    oldPrice: item.discount ? item.price + item.discount : undefined,
-  }))
-);
-
-const categories = [
-  'All',
-  ...Array.from(new Set(allProducts.map(p => p.category.charAt(0).toUpperCase() + p.category.slice(1))))
-];
 
 const sortOptions = [
   { value: '', label: 'Default' },
@@ -37,36 +22,42 @@ const getMinMaxPrice = (products: any[]) => {
 };
 
 const ProductsPage = () => {
+  const { products, loading: productsLoading } = useProducts();
+  const { categories: apiCategories, loading: categoriesLoading } = useCategories();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
   const [page, setPage] = useState(1);
   const [sort, setSort] = useState('');
-  const [priceRange, setPriceRange] = useState(() => getMinMaxPrice(allProducts));
+  const [priceRange, setPriceRange] = useState([0, 0]);
+
+  React.useEffect(() => {
+    if (products.length) {
+      const prices = products.map(p => p.price);
+      setPriceRange([Math.min(...prices), Math.max(...prices)]);
+    }
+  }, [products]);
 
   // Filtered and searched products
   const filteredProducts = useMemo(() => {
-    let products = allProducts;
+    let filtered = products;
     if (category !== 'All') {
-      products = products.filter(p => p.category.toLowerCase() === category.toLowerCase());
+      filtered = filtered.filter(p => p.category?.id === category);
     }
     if (search.trim()) {
-      products = products.filter(p =>
+      filtered = filtered.filter(p =>
         p.name.toLowerCase().includes(search.toLowerCase()) ||
-        (p.brand && p.brand.toLowerCase().includes(search.toLowerCase()))
+        (p.description && p.description.toLowerCase().includes(search.toLowerCase()))
       );
     }
-    // Price filter
-    products = products.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
-    // Sort
+    filtered = filtered.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
     if (sort === 'low-to-high') {
-      products = [...products].sort((a, b) => a.price - b.price);
+      filtered = [...filtered].sort((a, b) => a.price - b.price);
     } else if (sort === 'high-to-low') {
-      products = [...products].sort((a, b) => b.price - a.price);
+      filtered = [...filtered].sort((a, b) => b.price - a.price);
     }
-    return products;
-  }, [search, category, priceRange, sort]);
+    return filtered;
+  }, [products, search, category, priceRange, sort]);
 
-  // Pagination
   const totalPages = Math.ceil(filteredProducts.length / PAGE_SIZE);
   const paginatedProducts = filteredProducts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -75,14 +66,14 @@ const ProductsPage = () => {
     setSearch(e.target.value);
     setPage(1);
   };
-  const handleCategory = (cat: string) => {
-    setCategory(cat);
+  const handleCategory = (catId: string) => {
+    setCategory(catId);
     setPage(1);
     // Reset price range when category changes
-    if (cat === 'All') {
-      setPriceRange(getMinMaxPrice(allProducts));
+    if (catId === 'All') {
+      setPriceRange(getMinMaxPrice(products));
     } else {
-      const catProducts = allProducts.filter(p => p.category.toLowerCase() === cat.toLowerCase());
+      const catProducts = products.filter(p => p.category?.id === catId);
       setPriceRange(getMinMaxPrice(catProducts));
     }
   };
@@ -101,10 +92,10 @@ const ProductsPage = () => {
 
   // For price slider min/max
   const [minPrice, maxPrice] = useMemo(() => {
-    if (category === 'All') return getMinMaxPrice(allProducts);
-    const catProducts = allProducts.filter(p => p.category.toLowerCase() === category.toLowerCase());
+    if (category === 'All') return getMinMaxPrice(products);
+    const catProducts = products.filter(p => p.category?.id === category);
     return getMinMaxPrice(catProducts);
-  }, [category]);
+  }, [category, products]);
 
   return (
     <Layout>
@@ -129,8 +120,9 @@ const ProductsPage = () => {
                   onChange={e => handleCategory(e.target.value)}
                   className="px-3 py-2 rounded-md border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                  <option value="All">All</option>
+                  {apiCategories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
                 </select>
               </div>
@@ -142,9 +134,9 @@ const ProductsPage = () => {
                   onChange={handleSort}
                   className="px-3 py-2 rounded-md border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  {sortOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
+                  <option value="">Default</option>
+                  <option value="low-to-high">Price: Low to High</option>
+                  <option value="high-to-low">Price: High to Low</option>
                 </select>
               </div>
               {/* Price Range */}
@@ -174,11 +166,18 @@ const ProductsPage = () => {
           </div>
           {/* Product Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {paginatedProducts.length === 0 ? (
+            {productsLoading ? (
+              <div className="col-span-full text-center text-gray-400 py-12">Loading products...</div>
+            ) : paginatedProducts.length === 0 ? (
               <div className="col-span-full text-center text-gray-400 py-12">No products found.</div>
             ) : (
               paginatedProducts.map(product => (
-                <ProductCard key={product.id} {...product} />
+                <ProductCard
+                  key={product.id}
+                  {...product}
+                  image={product.image || ''}
+                  category={product.category || { id: '', name: 'Uncategorized' }}
+                />
               ))
             )}
           </div>

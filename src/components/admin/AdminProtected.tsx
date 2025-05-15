@@ -14,8 +14,21 @@ const AdminProtected = ({ children }: AdminProtectedProps) => {
   const router = useRouter();
 
   useEffect(() => {
+    // If user is logging out, set a flag
+    const onLogout = () => {
+      sessionStorage.setItem('justLoggedOut', 'true');
+    };
+    window.addEventListener('logout', onLogout);
+    return () => window.removeEventListener('logout', onLogout);
+  }, []);
+
+  useEffect(() => {
+    const justLoggedOut = sessionStorage.getItem('justLoggedOut');
     if (!isLoading && !isAuthenticated) {
-      toast.error('You must be logged in to access this page');
+      if (!justLoggedOut) {
+        toast.error('You must be logged in to access this page');
+      }
+      sessionStorage.removeItem('justLoggedOut');
       router.push('/login');
     } else if (!isLoading && isAuthenticated && user?.role !== 'ADMIN') {
       toast.error('You do not have permission to access this page');

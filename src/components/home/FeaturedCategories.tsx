@@ -27,37 +27,37 @@ const FeaturedCategories = () => {
       title: "Processors",
       description: "High-performance CPUs from AMD & Intel",
       icon: <Cpu size={32} className="text-primary" />,
-      href: "/products/processors"
+      href: "/products/"
     },
     {
       title: "Graphics Cards",
       description: "Gaming & workstation GPUs for any build",
       icon: <Gpu size={32} className="text-primary" />,
-      href: "/products/graphics-cards"
+      href: "/products/"
     },
     {
       title: "Storage",
       description: "SSDs & HDDs for lightning-fast performance",
       icon: <HardDrive size={32} className="text-primary" />,
-      href: "/products/storage"
+      href: "/products/"
     },
     {
       title: "Monitors",
       description: "High-refresh gaming & professional displays",
       icon: <Monitor size={32} className="text-primary" />,
-      href: "/products/monitors"
+      href: "/products/"
     },
     {
       title: "Headsets",
       description: "Gaming & audiophile-grade headsets",
       icon: <Headphones size={32} className="text-primary" />,
-      href: "/products/headsets"
+      href: "/products/"
     },
     {
       title: "Keyboards",
       description: "Mechanical & membrane keyboards",
       icon: <Keyboard size={32} className="text-primary" />,
-      href: "/products/keyboards"
+      href: "/products/"
     }
   ];
 

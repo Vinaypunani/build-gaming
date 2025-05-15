@@ -114,17 +114,16 @@ const CartPage = () => {
                     <span>₹{totalPrice.toLocaleString()}</span>
                   </div>
                 </div>
-                <Button
-                  variant="primary"
-                  size="lg"
-                  className="w-full mt-6"
-                  onClick={() => {
-                    // TODO: Implement checkout
-                    alert('Checkout functionality coming soon!');
-                  }}
-                >
-                  Proceed to Checkout
-                </Button>
+                <Link href="/checkout">
+
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full mt-6"
+                  >
+                    Proceed to Checkout
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
