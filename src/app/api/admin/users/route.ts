@@ -40,7 +40,10 @@ const verifyAdminAccess = async (request: NextRequest) => {
 };
 
 // GET - fetch all users
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     // Verify admin access
     const { isAdmin, error, status } = await verifyAdminAccess(request);
