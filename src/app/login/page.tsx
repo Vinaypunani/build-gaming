@@ -1,32 +1,19 @@
 "use client";
 
-import React, { useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import React, { Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import AuthCard from '@/components/auth/AuthCard';
 import LoginForm from '@/components/auth/LoginForm';
 import Layout from '@/components/layout/Layout';
 import { useAuth } from '@/context/AuthContext';
 
-const LoginPage = () => {
-  const searchParams = useSearchParams();
+const LoginContent = () => {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
-  const registered = searchParams.get('registered');
-  
-  useEffect(() => {
-    if (registered === 'true') {
-      // Check if we've already shown the message for this signup
-      const signupMessageShown = sessionStorage.getItem('signupMessageShown');
-      if (!signupMessageShown) {
-        toast.success('Account created successfully! Please log in.');
-        sessionStorage.setItem('signupMessageShown', 'true');
-      }
-    }
-  }, [registered]);
   
   // Redirect if already authenticated
-  useEffect(() => {
+  React.useEffect(() => {
     if (!isLoading && isAuthenticated) {
       if (user?.role === 'ADMIN') {
         router.push('/admin');
@@ -50,6 +37,14 @@ const LoginPage = () => {
         </AuthCard>
       </div>
     </Layout>
+  );
+};
+
+const LoginPage = () => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 };
 

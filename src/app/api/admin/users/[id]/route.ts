@@ -3,6 +3,8 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import prisma from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 interface JwtPayload {
   id: string;
   email: string;
