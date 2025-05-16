@@ -1,12 +1,29 @@
 "use client";
 
 import React, { Suspense } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import AuthCard from '@/components/auth/AuthCard';
 import LoginForm from '@/components/auth/LoginForm';
 import Layout from '@/components/layout/Layout';
 import { useAuth } from '@/context/AuthContext';
+
+const RegistrationMessage = () => {
+  const searchParams = useSearchParams();
+  const registered = searchParams.get('registered');
+  
+  React.useEffect(() => {
+    if (registered === 'true') {
+      const signupMessageShown = sessionStorage.getItem('signupMessageShown');
+      if (!signupMessageShown) {
+        toast.success('Account created successfully! Please log in.');
+        sessionStorage.setItem('signupMessageShown', 'true');
+      }
+    }
+  }, [registered]);
+
+  return null;
+};
 
 const LoginContent = () => {
   const router = useRouter();
@@ -43,6 +60,7 @@ const LoginContent = () => {
 const LoginPage = () => {
   return (
     <Suspense fallback={<div>Loading...</div>}>
+      <RegistrationMessage />
       <LoginContent />
     </Suspense>
   );
