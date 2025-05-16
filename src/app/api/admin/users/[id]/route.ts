@@ -42,10 +42,10 @@ const verifyAdminAccess = async (request: NextRequest) => {
 // GET - get a single user by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    const userId = params.id;
+    const userId = context.params.id;
     
     // Verify admin access
     const { isAdmin, error, status } = await verifyAdminAccess(request);
@@ -96,10 +96,10 @@ export async function GET(
 // PUT - update a user
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    const userId = params.id;
+    const userId = context.params.id;
     
     // Verify admin access
     const { isAdmin, error, status, userId: adminId } = await verifyAdminAccess(request);
@@ -188,10 +188,10 @@ export async function PUT(
 // DELETE - delete a user
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    const userId = params.id;
+    const userId = context.params.id;
     
     // Verify admin access
     const { isAdmin, error, status, userId: adminId } = await verifyAdminAccess(request);
@@ -207,20 +207,8 @@ export async function DELETE(
     if (userId === adminId) {
       return NextResponse.json({
         success: false,
-        message: 'You cannot delete your own admin account',
+        message: 'You cannot delete your own account',
       }, { status: 400 });
-    }
-
-    // Check if user exists
-    const userExists = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!userExists) {
-      return NextResponse.json({
-        success: false,
-        message: 'User not found',
-      }, { status: 404 });
     }
 
     // Delete user
