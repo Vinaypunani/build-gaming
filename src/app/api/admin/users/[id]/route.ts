@@ -39,13 +39,19 @@ const verifyAdminAccess = async (request: NextRequest) => {
   return { isAdmin: true, userId: decoded.id };
 };
 
+type RouteContext = {
+  params: {
+    id: string;
+  };
+};
+
 // GET - get a single user by ID
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: RouteContext
 ) {
   try {
-    const userId = context.params.id;
+    const userId = params.id;
     
     // Verify admin access
     const { isAdmin, error, status } = await verifyAdminAccess(request);
@@ -96,10 +102,10 @@ export async function GET(
 // PUT - update a user
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: RouteContext
 ) {
   try {
-    const userId = context.params.id;
+    const userId = params.id;
     
     // Verify admin access
     const { isAdmin, error, status, userId: adminId } = await verifyAdminAccess(request);
@@ -188,10 +194,10 @@ export async function PUT(
 // DELETE - delete a user
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: RouteContext
 ) {
   try {
-    const userId = context.params.id;
+    const userId = params.id;
     
     // Verify admin access
     const { isAdmin, error, status, userId: adminId } = await verifyAdminAccess(request);
