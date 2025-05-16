@@ -42,10 +42,10 @@ const verifyAdminAccess = async (request: NextRequest) => {
 // GET - get a single user by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const userId = params.id;
+    const { id: userId } = await params;
     
     // Verify admin access
     const { isAdmin, error, status } = await verifyAdminAccess(request);
@@ -96,10 +96,10 @@ export async function GET(
 // PUT - update a user
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const userId = params.id;
+    const { id: userId } = await params;
     
     // Verify admin access
     const { isAdmin, error, status, userId: adminId } = await verifyAdminAccess(request);
@@ -188,10 +188,10 @@ export async function PUT(
 // DELETE - delete a user
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const userId = params.id;
+    const { id: userId } = await params;
     
     // Verify admin access
     const { isAdmin, error, status, userId: adminId } = await verifyAdminAccess(request);
