@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Cpu, HardDrive, Gpu, Monitor, Headphones, Keyboard } from 'lucide-react';
+import { Cpu, HardDrive, CpuIcon, Monitor, Headphones, Keyboard } from 'lucide-react';
 
 interface CategoryCardProps {
   title: string;
@@ -32,7 +32,7 @@ const FeaturedCategories = () => {
     {
       title: "Graphics Cards",
       description: "Gaming & workstation GPUs for any build",
-      icon: <Gpu size={32} className="text-primary" />,
+      icon: <CpuIcon size={32} className="text-primary" />,
       href: "/products/"
     },
     {
