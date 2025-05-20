@@ -1,5 +1,5 @@
 import Button from '../ui/Button';
-import { Cpu, CpuIcon, HardDrive, Fan } from 'lucide-react';
+import { Cpu, Gpu, HardDrive, Fan } from 'lucide-react';
 
 const BuildPcCta = () => {
   return (
@@ -10,7 +10,7 @@ const BuildPcCta = () => {
           <Cpu size={240} />
         </div>
         <div className="absolute top-1/2 right-10 text-secondary/20 animate-float">
-          <CpuIcon size={180} />
+          <Gpu size={180} />
         </div>
         <div className="absolute bottom-10 left-1/4 text-accent/20 animate-pulse">
           <HardDrive size={150} />

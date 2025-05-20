@@ -1,19 +1,32 @@
 "use client";
 
-import React, { Suspense } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import AuthCard from '@/components/auth/AuthCard';
 import LoginForm from '@/components/auth/LoginForm';
 import Layout from '@/components/layout/Layout';
 import { useAuth } from '@/context/AuthContext';
 
-const LoginContent = () => {
+const LoginPage = () => {
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
+  const registered = searchParams.get('registered');
+  
+  useEffect(() => {
+    if (registered === 'true') {
+      // Check if we've already shown the message for this signup
+      const signupMessageShown = sessionStorage.getItem('signupMessageShown');
+      if (!signupMessageShown) {
+        toast.success('Account created successfully! Please log in.');
+        sessionStorage.setItem('signupMessageShown', 'true');
+      }
+    }
+  }, [registered]);
   
   // Redirect if already authenticated
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isLoading && isAuthenticated) {
       if (user?.role === 'ADMIN') {
         router.push('/admin');
@@ -22,20 +35,6 @@ const LoginContent = () => {
       }
     }
   }, [isLoading, isAuthenticated, user, router]);
-
-  // Check for registration success message
-  React.useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const registered = searchParams.get('registered');
-    
-    if (registered === 'true') {
-      const signupMessageShown = sessionStorage.getItem('signupMessageShown');
-      if (!signupMessageShown) {
-        toast.success('Account created successfully! Please log in.');
-        sessionStorage.setItem('signupMessageShown', 'true');
-      }
-    }
-  }, []);
   
   return (
     <Layout>
@@ -51,14 +50,6 @@ const LoginContent = () => {
         </AuthCard>
       </div>
     </Layout>
-  );
-};
-
-const LoginPage = () => {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <LoginContent />
-    </Suspense>
   );
 };
 

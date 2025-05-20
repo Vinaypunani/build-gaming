@@ -4,12 +4,11 @@ import { deleteImage } from '@/lib/cloudinary';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
     const product = await prisma.product.findUnique({
-      where: { id },
+      where: { id: params.id },
       include: { category: true },
     });
     if (!product) {
@@ -32,13 +31,12 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
     // First, get the product to check if it exists and get its image URL
     const product = await prisma.product.findUnique({
-      where: { id },
+      where: { id: params.id },
       include: {
         orderItems: true // Include orderItems to check if product is in use
       }
@@ -65,13 +63,13 @@ export async function DELETE(
       // If product has order items, delete them first
       if (product.orderItems && product.orderItems.length > 0) {
         await prisma.orderItem.deleteMany({
-          where: { productId: id }
+          where: { productId: params.id }
         });
       }
 
       // Delete the product from the database
       const deletedProduct = await prisma.product.delete({
-        where: { id },
+        where: { id: params.id },
       });
 
       return NextResponse.json({ 
