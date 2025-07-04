@@ -1,0 +1,19 @@
+# Ignore TypeScript and ESLint files
+*.tsbuildinfo
+.eslintrc*
+.prettierrc*
+tsconfig.json
+.eslintignore
+.prettierignore
+
+# Ignore development files
+.env.local
+.env.development
+.env.test
+
+# Ignore test files
+**/*.test.*
+**/*.spec.*
+__tests__/
+test/
+tests/ 

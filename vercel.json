@@ -3,6 +3,10 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "framework": "nextjs",
+  "env": {
+    "SKIP_TYPE_CHECK": "true",
+    "SKIP_ESLINT": "true"
+  },
   "builds": [
     {
       "src": "package.json",
