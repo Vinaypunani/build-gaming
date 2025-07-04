@@ -32,7 +32,12 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
-      setItems(JSON.parse(savedCart));
+      try {
+        const parsed = JSON.parse(savedCart);
+        setItems(Array.isArray(parsed) ? parsed : []);
+      } catch {
+        setItems([]);
+      }
     }
   }, []);
 
